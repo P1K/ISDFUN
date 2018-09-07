@@ -1,7 +1,7 @@
 # A simple toy ISD
 # PK - 2018
 
-def find_lo_weight(C,maxiter=1000000,wtarget=1,wcomb=2,nthreads=1):
+def find_lo_weight(C,maxiter=1000000,wtarget=1,wcomb=2,nthreads=1,niterperthread=1):
 	from sage.combinat.gray_codes import combinations
 
 	if GF(2) != C.base_field():
@@ -13,47 +13,48 @@ def find_lo_weight(C,maxiter=1000000,wtarget=1,wcomb=2,nthreads=1):
 	minwd = G.row(0) # arbitrary
 	minw = minwd.hamming_weight()
 	it = 0
-	nthreads = min(maxiter, nthreads)
+	nthreads = min(maxiter/niterperthread, nthreads)
 
 	@parallel(nthreads)
-	def do_Iset(curminw):
+	def do_Iset(curminw,nbiter):
 		set_random_seed()
-		while True: # TODO kind of optim?
-			Iset = sample(supp,k)
-			Gis = G.matrix_from_columns(Iset)
-			if Gis.is_invertible():
-				break
-		Gis_inv = Gis.inverse()
-		Glw = Gis_inv * G
-		curminwd = None
-		# weight one is simple
-		for c in range(k):
-			cc = Glw.row(c)
-			cw = cc.hamming_weight()
-			if cw < curminw:
-				curminwd,curminw = cc,cw
-		# further weights wiz Gray codes
-		for w in range(wcomb)[1:]:
-			base = [1]*w
-			base.extend([0]*(k-w))
-			v = vector(base)
-			cc = v*Glw
-			cw = cc.hamming_weight() #ugly repeat 1
-			if cw < curminw:
-				curminwd,curminw = cc,cw
-			for i,j in combinations(k,w):
-				cc += Glw.row(i)
-				cc += Glw.row(j)
+		for i in range(nbiter):
+			while True: # TODO kind of optim?
+				Iset = sample(supp,k)
+				Gis = G.matrix_from_columns(Iset)
+				if Gis.is_invertible():
+					break
+			Gis_inv = Gis.inverse()
+			Glw = Gis_inv * G
+			curminwd = None
+			# weight one is simple
+			for c in range(k):
+				cc = Glw.row(c)
 				cw = cc.hamming_weight()
-				if cw < curminw: #ugly repeat 2
+				if cw < curminw:
 					curminwd,curminw = cc,cw
+			# further weights wiz Gray codes
+			for w in range(wcomb)[1:]:
+				base = [1]*w
+				base.extend([0]*(k-w))
+				v = vector(base)
+				cc = v*Glw
+				cw = cc.hamming_weight() #ugly repeat 1
+				if cw < curminw:
+					curminwd,curminw = cc,cw
+				for i,j in combinations(k,w):
+					cc += Glw.row(i)
+					cc += Glw.row(j)
+					cw = cc.hamming_weight()
+					if cw < curminw: #ugly repeat 2
+						curminwd,curminw = cc,cw
 		return (curminw,curminwd)
 
 	while it < maxiter:
 		if 1 == nthreads:
-			(cw,cc) = do_Iset(minw)
+			(cw,cc) = do_Iset(minw,1)
 		else:
-			run = do_Iset([minw]*nthreads)
+			run = do_Iset([(minw,niterperthread)]*nthreads)
 			res = list(run)
 			(cw,cc) = min(res)[1]
 		if cw < minw:
@@ -62,10 +63,10 @@ def find_lo_weight(C,maxiter=1000000,wtarget=1,wcomb=2,nthreads=1):
 		# done once per iteration, as not expected to be successful many times?
 		if minw <= wtarget:
 			return minwd
-		it += nthreads
+		it += nthreads*niterperthread
 	return minwd
 
-def find_lo_error(C,w,maxiter=1000000,maxerrweight=1,wcomb=2,nthreads=1):
+def find_lo_error(C,w,maxiter=1000000,maxerrweight=1,wcomb=2,nthreads=1,niterperthread=1):
 	s = C.syndrome(matrix(w).transpose())
 	if (0 == vector(s).hamming_weight()):
 		return (w,w+w)
@@ -74,11 +75,11 @@ def find_lo_error(C,w,maxiter=1000000,maxerrweight=1,wcomb=2,nthreads=1):
 	Gg = block_matrix([G,matrix(w)],nrows=2)
 	Cc = LinearCode(Gg)
 	
-	e = find_lo_weight(Cc,maxiter,maxerrweight,wcomb,nthreads)
+	e = find_lo_weight(Cc,maxiter,maxerrweight,wcomb,nthreads,niterperthread)
 	wc = w+e
 	s = C.syndrome(matrix(wc).transpose())
 	if (0 == vector(s).hamming_weight()):
-		print "found a codeword with distance "+str(e.hamming_weight())
+		print "Found a codeword with distance "+str(e.hamming_weight())
 		return (wc,e)
 	else:
 		print "Failure"
