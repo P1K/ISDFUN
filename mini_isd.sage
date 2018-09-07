@@ -18,6 +18,7 @@ def find_lo_weight(C,maxiter=1000000,wtarget=1,wcomb=2,nthreads=1,niterperthread
 	@parallel(nthreads)
 	def do_Iset(curminw,nbiter):
 		set_random_seed()
+		curminwd = None
 		for i in range(nbiter):
 			while True: # TODO kind of optim?
 				Iset = sample(supp,k)
@@ -26,7 +27,6 @@ def find_lo_weight(C,maxiter=1000000,wtarget=1,wcomb=2,nthreads=1,niterperthread
 					break
 			Gis_inv = Gis.inverse()
 			Glw = Gis_inv * G
-			curminwd = None
 			# weight one is simple
 			for c in range(k):
 				cc = Glw.row(c)
@@ -74,7 +74,7 @@ def find_lo_error(C,w,maxiter=1000000,maxerrweight=1,wcomb=2,nthreads=1,niterper
 	G = C.generator_matrix()
 	Gg = block_matrix([G,matrix(w)],nrows=2)
 	Cc = LinearCode(Gg)
-	
+
 	e = find_lo_weight(Cc,maxiter,maxerrweight,wcomb,nthreads,niterperthread)
 	wc = w+e
 	s = C.syndrome(matrix(wc).transpose())
