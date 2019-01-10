@@ -1,8 +1,10 @@
 # A simple toy ISD
 # PK - 2018
 
+
 def find_lo_weight(C,maxiter=1000000,wtarget=1,wcomb=2,nthreads=1,niterperthread=1):
 	from sage.combinat.gray_codes import combinations
+	import time
 
 	if GF(2) != C.base_field():
 		raise NotImplementedError
@@ -14,21 +16,24 @@ def find_lo_weight(C,maxiter=1000000,wtarget=1,wcomb=2,nthreads=1,niterperthread
 	minw = minwd.hamming_weight()
 	it = 0
 	nthreads = min(maxiter/niterperthread, nthreads)
+	epoch = time.clock()
 
 	@parallel(nthreads)
 	def do_Iset(curminw,nbiter):
 		set_random_seed()
 		curminwd = None
-		for i in range(nbiter):
-			while True: # TODO kind of optim?
+		for i in xrange(nbiter):
+			while True:
 				Iset = sample(supp,k)
 				Gis = G.matrix_from_columns(Iset)
-				if Gis.is_invertible():
+				try:
+					Gis_inv = Gis.inverse()
 					break
-			Gis_inv = Gis.inverse()
+				except ZeroDivisionError:
+					continue
 			Glw = Gis_inv * G
 			# weight one is simple
-			for c in range(k):
+			for c in xrange(k):
 				cc = Glw.row(c)
 				cw = cc.hamming_weight()
 				if cw < curminw:
@@ -59,13 +64,14 @@ def find_lo_weight(C,maxiter=1000000,wtarget=1,wcomb=2,nthreads=1,niterperthread
 			(cw,cc) = min(res)[1]
 		if cw < minw:
 			minwd,minw = cc,cw
-			print "Found a new codeword of weight "+str(cw)
+			print "Found a new codeword of weight "+str(cw)+" @ time "+str(time.clock() - epoch)
 		# done once per iteration, as not expected to be successful many times?
 		if minw <= wtarget:
 			return minwd
 		it += nthreads*niterperthread
 	return minwd
 
+# TODO always include the error in the linear combs
 def find_lo_error(C,w,maxiter=1000000,maxerrweight=1,wcomb=2,nthreads=1,niterperthread=1):
 	s = C.syndrome(matrix(w).transpose())
 	if (0 == vector(s).hamming_weight()):
