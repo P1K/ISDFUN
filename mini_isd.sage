@@ -57,7 +57,7 @@ def find_lo_weight(C,maxiter=1000000,wtarget=1,wcomb=2,nthreads=1,niterperthread
 
 	while it < maxiter:
 		if 1 == nthreads:
-			(cw,cc) = do_Iset(minw,1)
+			(cw,cc) = do_Iset(minw,niterperthread)
 		else:
 			run = do_Iset([(minw,niterperthread)]*nthreads)
 			res = list(run)
