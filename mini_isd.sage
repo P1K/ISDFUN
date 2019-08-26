@@ -16,7 +16,7 @@ def find_lo_weight(C,maxiter=1000000,wtarget=1,wcomb=2,nthreads=1,niterperthread
 	minw = minwd.hamming_weight()
 	it = 0
 	nthreads = min(maxiter/niterperthread, nthreads)
-	epoch = time.clock()
+	epoch = time.time()
 
 	@parallel(nthreads)
 	def do_Iset(curminw,nbiter):
@@ -64,7 +64,7 @@ def find_lo_weight(C,maxiter=1000000,wtarget=1,wcomb=2,nthreads=1,niterperthread
 			(cw,cc) = min(res)[1]
 		if cw < minw:
 			minwd,minw = cc,cw
-			print "Found a new codeword of weight "+str(cw)+" @ time "+str(time.clock() - epoch)
+			print "Found a new codeword of weight "+str(cw)+" @ (wall) time "+str(time.time() - epoch)
 		# done once per iteration, as not expected to be successful many times?
 		if minw <= wtarget:
 			return minwd
