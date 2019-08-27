@@ -90,3 +90,13 @@ def find_lo_error(C,w,maxiter=1000000,maxerrweight=1,wcomb=2,nthreads=1,niterper
 	else:
 		print "Failure"
 		return (None,None)
+
+# Kind of a wasteful generic conversion
+def find_syndrome_preim(H,s,maxiter=1000000,maxerrweight=2,wcomb=2,nthreads=1,niterperthread=1):
+	Hh = LinearCode(block_matrix([H.generator_matrix(),matrix(s).transpose()],ncols=2))
+	Cc = Hh.dual_code()
+	for i in xrange(maxiter): # LOL
+		w = find_lo_weight(Cc,maxiter,maxerrweight,wcomb,nthreads,niterperthread)
+		if w[len(w)-1] == 1:
+			return w[0:len(w)-1]
+	return None
