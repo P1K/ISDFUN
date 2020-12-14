@@ -22,7 +22,7 @@ def find_lo_weight(C,maxiter=1000000,wtarget=1,wcomb=2,nthreads=1,niterperthread
 	def do_Iset(curminw,nbiter):
 		set_random_seed()
 		curminwd = None
-		for i in xrange(nbiter):
+		for i in range(nbiter):
 			while True:
 				Iset = sample(supp,k)
 				Gis = G.matrix_from_columns(Iset)
@@ -33,7 +33,7 @@ def find_lo_weight(C,maxiter=1000000,wtarget=1,wcomb=2,nthreads=1,niterperthread
 					continue
 			Glw = Gis_inv * G
 			# weight one is simple
-			for c in xrange(k):
+			for c in range(k):
 				cc = Glw.row(c)
 				cw = cc.hamming_weight()
 				if cw < curminw:
@@ -64,7 +64,7 @@ def find_lo_weight(C,maxiter=1000000,wtarget=1,wcomb=2,nthreads=1,niterperthread
 			(cw,cc) = min(res)[1]
 		if cw < minw:
 			minwd,minw = cc,cw
-			print "Found a new codeword of weight "+str(cw)+" @ (wall) time "+str(time.time() - epoch)
+			print("Found a new codeword of weight "+str(cw)+" @ (wall) time "+str(time.time() - epoch))
 		# done once per iteration, as not expected to be successful many times?
 		if minw <= wtarget:
 			return minwd
@@ -93,7 +93,7 @@ def find_lo_weight_forced(C,maxiter=1000000,wtarget=1,wcomb=2,nthreads=1,niterpe
 	def do_Iset(curminw,nbiter):
 		set_random_seed()
 		curminwd = None
-		for i in xrange(nbiter):
+		for i in range(nbiter):
 			while True:
 				Iset = [forced_pos]
 				Iset.extend(sample(supp,k-1))
@@ -111,7 +111,7 @@ def find_lo_weight_forced(C,maxiter=1000000,wtarget=1,wcomb=2,nthreads=1,niterpe
 				curminwd,curminw = cc,cw
 			# weight two too
 			if (wcomb >= 2):
-				for c in xrange(1,k):
+				for c in range(1,k):
 					cc2 = Glw.row(c) + cc
 					cw2 = cc2.hamming_weight()
 					if cw2 < curminw:
@@ -142,7 +142,7 @@ def find_lo_weight_forced(C,maxiter=1000000,wtarget=1,wcomb=2,nthreads=1,niterpe
 			(cw,cc) = min(res)[1]
 		if cw < minw:
 			minwd,minw = cc,cw
-			print "Found a new codeword of weight "+str(cw)+" @ (wall) time "+str(time.time() - epoch)
+			print("Found a new codeword of weight "+str(cw)+" @ (wall) time "+str(time.time() - epoch))
 		if minw <= wtarget:
 			return minwd
 		it += nthreads*niterperthread
@@ -162,10 +162,10 @@ def find_lo_error(C,w,maxiter=1000000,maxerrweight=1,wcomb=2,nthreads=1,niterper
 	wc = w+e
 	s = C.syndrome(matrix(wc).transpose())
 	if (0 == vector(s).hamming_weight()):
-		print "Found a codeword with distance "+str(e.hamming_weight())
+		print("Found a codeword with distance "+str(e.hamming_weight()))
 		return (wc,e)
 	else:
-		print "Failure"
+		print("Failure")
 		return (None,None)
 
 # Kind of a wasteful generic conversion
